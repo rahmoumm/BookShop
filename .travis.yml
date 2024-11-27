@@ -2,4 +2,5 @@ language: java
 jdk:
   - openjdk19
 script:
+  - cd demo
   - ./mvnw clean install
