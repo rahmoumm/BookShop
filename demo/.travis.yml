@@ -1,0 +1,5 @@
+language: java
+jdk:
+  - openjdk19
+script:
+  - ./mvnw clean install
