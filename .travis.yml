@@ -9,8 +9,9 @@ before_install:
 
 script:
   - cd demo
-  - ./mvnw clean org.jacoco:jacoco-maven-plugin:prepare-agent install
+  - ./mvnw clean verify -Pcoverage install
   - ./mvnw deploy jib:build -P deploy-docker
+
 
 
 after_success:
