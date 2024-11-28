@@ -4,9 +4,12 @@ jdk:
 
 before_install:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - docker pull openjdk:11-jre-slim-sid
+  - docker pull openjdk:19-jre-slim-sid
 
 script:
   - cd demo
-  - ./mvnw clean install
+  - ./mvnw clean org.jacoco:jacoco-maven-plugin:prepare-agent install
   - ./mvnw deploy jib:build -P deploy-docker
+
+after_success:
+  - bash <(curl -s http:codecov.io/bash)
