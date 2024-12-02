@@ -11,5 +11,5 @@ INSERT INTO STOCK (user_id, book_id, available_quantity) VALUES(11, 11, 10);
 INSERT INTO STOCK (user_id, book_id, available_quantity) VALUES(11, 12, 15);
 INSERT INTO STOCK (user_id, book_id, available_quantity) VALUES(11, 13, 20);
 INSERT INTO STOCK (user_id, book_id, available_quantity) VALUES(12, 11, 30);
-INSERT INTO STOCK (user_id, book_id, available_quantity) VALUES(13, 11, 35);
+INSERT INTO STOCK (user_id, book_id, available_quantity) VALUES(12, 12, 35);
 INSERT INTO STOCK (user_id, book_id, available_quantity) VALUES(13, 12, 40);

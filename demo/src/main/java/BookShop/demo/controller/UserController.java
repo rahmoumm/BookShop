@@ -1,12 +1,9 @@
 package BookShop.demo.controller;
 
 
-import BookShop.demo.model.Book;
 import BookShop.demo.model.User;
 import BookShop.demo.repository.UserRepository;
 import BookShop.demo.service.UserService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -67,7 +64,7 @@ public class UserController {
             user.setFirstName(newUser.getFirstName());
         }
         if(newUser.getLastName() != null){
-            user.setEmail(newUser.getLastName());
+            user.setLastName(newUser.getLastName());
         }
         if(newUser.getPassword() != null){
             user.setPassword(  new BCryptPasswordEncoder(10).encode(newUser.getPassword()) );

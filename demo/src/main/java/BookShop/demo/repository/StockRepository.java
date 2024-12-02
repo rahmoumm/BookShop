@@ -10,5 +10,5 @@ import java.util.List;
 public interface StockRepository extends CrudRepository<Stock, StockKey> {
     List<Stock> findByUserId(Integer userId);
     List<Stock> findByBookId(Integer bookId);
-    Stock findByUserIdAndBookId(Integer bookId, Integer userId);
+    Stock findByUserIdAndBookId(Integer userId, Integer bookId);
 }
