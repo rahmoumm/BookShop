@@ -24,19 +24,32 @@ public class User {
     private String password;
     @Lob
     private byte[] image; // maybe you will need to change it to Byte
-    private String role;
 
     @OneToMany(mappedBy = "user")
     List<Stock> bookStocks = new ArrayList<>();
 
-    protected User(){};
+    public List<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<Role> roles) {
+        this.roles = roles;
+    }
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "users_role",
+    joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id"),
+    inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "role_id")
+    )
+    private List<Role> roles = new ArrayList<>();
+
+    protected User(){}
 
     public User(String firstName, String lastName, String email, String password){
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.password = password;
-        this.role = "USER";
     }
 
     public Integer getId() {
@@ -57,10 +70,6 @@ public class User {
 
     public String getPassword() {
         return password;
-    }
-
-    public String getRole() {
-        return role;
     }
 
     public byte[] getImage() {
@@ -87,9 +96,6 @@ public class User {
         this.password = password;
     }
 
-    public void setRole(String role) {
-        this.role = role;
-    }
 
     @Override
     public String toString() {

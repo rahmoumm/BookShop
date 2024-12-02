@@ -26,9 +26,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 
         http
-                .csrf(customise -> customise
-//                        .ignoringRequestMatchers(toH2Console())
-                        .disable());
+                .csrf(customise -> customise.disable());
 
         // Here it says that any request for it to pass, the principal needs to be authenticated
         // but even if you pass the real username/password it won't pass. WHY??
@@ -37,6 +35,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/users/admin/**").hasRole("ADMIN")
 //                        .requestMatchers("/books/reserved/**").hasAuthority("SELLER")
                         .anyRequest().authenticated()
                 );

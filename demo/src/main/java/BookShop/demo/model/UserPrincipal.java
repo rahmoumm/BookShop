@@ -1,12 +1,14 @@
 package BookShop.demo.model;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 
+@Slf4j
 public class UserPrincipal implements UserDetails {
 
     private User user;
@@ -17,7 +19,12 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singleton(new SimpleGrantedAuthority("USER")) ;
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
+        for(Role role:user.getRoles()){
+            authorities.add(new SimpleGrantedAuthority("ROLE_"+role.getRolename()));
+        }
+
+        return authorities;
     }
 
     @Override
