@@ -37,6 +37,9 @@ public class User {
     }
 
     @ManyToMany(fetch = FetchType.EAGER)
+    // Fetch EAGER so that the roles are fetched immediately when we are fetching the user,
+    // knowing that a user will not have a lot of roles to the point where it would impact the
+    // performance it is better to use it
     @JoinTable(name = "users_role",
     joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id"),
     inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "role_id")

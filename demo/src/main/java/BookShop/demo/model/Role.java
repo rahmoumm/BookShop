@@ -1,5 +1,6 @@
 package BookShop.demo.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -17,7 +18,11 @@ public class Role {
     @Column(name = "role_name")
     private String roleName;
 
+    // JsonIgnor is important here because when we want to serialize it, the serializer look for the user and after that
+    // the user's role, when looking into a role, he finds users and it does never end ( infinite loop )
+    @JsonIgnore
     @ManyToMany(mappedBy = "roles")
+
     List<User> users = new ArrayList<>();
 
     public int getId() {
@@ -32,7 +37,7 @@ public class Role {
         return roleName;
     }
 
-    public void setRolename(String roleName) {
+    public void setRoleName(String roleName) {
         this.roleName = roleName;
     }
 
