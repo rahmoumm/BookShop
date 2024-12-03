@@ -1,2 +1,2 @@
 # BookShop
-Simple book shop application using Spring Boot
+Simple book shop back end application using Spring Boot
