@@ -3,8 +3,10 @@ package BookShop.demo.controller;
 
 import BookShop.demo.model.Book;
 import BookShop.demo.repository.BookRepository;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.util.UriComponentsBuilder;
@@ -13,8 +15,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+@Slf4j
 @RestController
-@RequestMapping("/books")
+@RequestMapping
 public class BookController {
 
     private BookController(BookRepository bookRepository){
@@ -22,7 +25,7 @@ public class BookController {
     }
     private final BookRepository bookRepository;
 
-    @GetMapping("/{bookId}")
+    @GetMapping("/nonAuth/books/{bookId}")
     public ResponseEntity<Book> getUserById(@PathVariable int bookId){
         Book book = bookRepository.findById(bookId);
         if(book != null){
@@ -32,8 +35,12 @@ public class BookController {
         }
     }
 
-    @GetMapping
+    @GetMapping("/nonAuth/books")
     public ResponseEntity<List<Book>> findAllBooks(){
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        log.info(authentication.getAuthorities().toString());
+
         List<Book> allBooks = bookRepository.findAll();
         if(allBooks != null){
             return ResponseEntity.ok(allBooks);
@@ -42,32 +49,30 @@ public class BookController {
         }
     }
 
-    @PutMapping("/reserved/{bookId}")
+    @PutMapping("/books/reserved/{bookId}")
     public ResponseEntity<Void> updateBook(@PathVariable("bookId") int bookId, @RequestBody Book newBook){
         Book book = bookRepository.findById(bookId);
         if(book == null){
             return ResponseEntity.notFound().build();
         }else{
-            if(newBook.getPrice() != -1){
-                book.setPrice(newBook.getPrice());
-            }
             if(newBook.getRating() != -1){
                 book.setRating(newBook.getRating());
             }
             if(newBook.getName() != null){
                 book.setName(newBook.getName());
             }
+            log.info(book.getRating().toString());
             bookRepository.save(book);
             return ResponseEntity.ok().build();
         }
     }
 
-    @PostMapping("/reserved")
+    @PostMapping("/books/reserved")
     public ResponseEntity<Void> createBook(@RequestBody Book newBook, UriComponentsBuilder ucb){
 
 
-
-        Book book = bookRepository.save(newBook);
+//        Book book =
+                bookRepository.save(newBook);
         URI location = ucb
                 .path("/books/{id}")
                 .buildAndExpand(newBook.getId())
@@ -75,7 +80,7 @@ public class BookController {
         return ResponseEntity.created(location).build();
     }
 
-    @DeleteMapping("/reserved/{bookId}")
+    @DeleteMapping("/books/reserved/{bookId}")
     public ResponseEntity<Void> deleteBook(@PathVariable("bookId") int bookId){
         Book book = bookRepository.findById(bookId);
         if(book == null){

@@ -29,7 +29,7 @@ public class UserControllerTest {
     void shouldReturnAllUsersWhenDataExists(){
         ResponseEntity<String> reponse = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/users", String.class);
+                .getForEntity("/nonAuth/users", String.class);
         Assertions.assertEquals(reponse.getStatusCode(), HttpStatus.OK);
 
         DocumentContext jsonVals = JsonPath.parse(reponse.getBody());
@@ -48,7 +48,7 @@ public class UserControllerTest {
     void shouldReturnAUserWhenItExists(){
         ResponseEntity<String> reponse = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/users/11", String.class);
+                .getForEntity("/nonAuth/users/11", String.class);
 
         Assertions.assertEquals(reponse.getStatusCode(), HttpStatus.OK);
 
@@ -63,7 +63,7 @@ public class UserControllerTest {
     void shouldReturnNotFoundIfDoNotExist(){
         ResponseEntity<String> reponse = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/users/159", String.class);
+                .getForEntity("/nonAuth/users/159", String.class);
 
         Assertions.assertEquals(reponse.getStatusCode(), HttpStatus.NOT_FOUND);
     }
@@ -81,7 +81,7 @@ public class UserControllerTest {
 
         ResponseEntity<User> user = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/users/13", User.class);
+                .getForEntity("/nonAuth/users/13", User.class);
         Assertions.assertEquals(user.getBody().getLastName(), "ahlam");
     }
 
@@ -120,7 +120,7 @@ public class UserControllerTest {
 
         response = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/users/13", Void.class);
+                .getForEntity("/nonAuth/users/13", Void.class);
 
         Assertions.assertEquals(response.getStatusCode(), HttpStatus.NOT_FOUND);
     }

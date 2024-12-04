@@ -4,8 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
-import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
+
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -38,6 +37,7 @@ public class SecurityConfig {
         // ==> You need to mention it also
         http
                 .authorizeHttpRequests((authorize) -> authorize
+                        .requestMatchers("/nonAuth/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/users/admin/**").hasRole("OWNER")
 //                        .requestMatchers("/books/reserved/**").hasAuthority("SELLER")

@@ -6,7 +6,6 @@ import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
@@ -51,7 +50,7 @@ public class BookControllerTest {
     void shouldReturnAllBooksWhenDataExists(){
         ResponseEntity<String> reponse = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/books", String.class);
+                .getForEntity("/nonAuth/books", String.class);
         Assertions.assertEquals(reponse.getStatusCode(), HttpStatus.OK);
 
         DocumentContext jsonVals = JsonPath.parse(reponse.getBody());
@@ -70,7 +69,7 @@ public class BookControllerTest {
     void shouldReturnABookWhenItExists(){
         ResponseEntity<String> reponse = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/books/11", String.class);
+                .getForEntity("/nonAuth/books/11", String.class);
 
         Assertions.assertEquals(reponse.getStatusCode(), HttpStatus.OK);
 
@@ -93,8 +92,8 @@ public class BookControllerTest {
     // ###### PUT TESTS
     @Test
     @DirtiesContext
-    void shouldChangeABookPriceWhenItExists(){
-        HttpEntity<Book> newBook = new HttpEntity<>(new Book(null, 187d, null));
+    void shouldChangeABookRatingWhenItExists(){
+        HttpEntity<Book> newBook = new HttpEntity<>(new Book(null, 3.1));
         // exchange
         ResponseEntity<Void> responseEntity = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
@@ -104,13 +103,13 @@ public class BookControllerTest {
 
         ResponseEntity<Book> book = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/books/11", Book.class);
-        Assertions.assertEquals(book.getBody().getPrice(), 187L);
+                .getForEntity("/nonAuth/books/11", Book.class);
+        Assertions.assertEquals(book.getBody().getRating(), 3.1);
     }
 
     @Test
     void shouldNotModifyIfDoNotExist(){
-        HttpEntity<Book> newBook = new HttpEntity<>(new Book(null, 187d, null));
+        HttpEntity<Book> newBook = new HttpEntity<>(new Book(null,  3.1));
 
         ResponseEntity<Void> responseEntity = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
@@ -125,7 +124,7 @@ public class BookControllerTest {
     @Test
     @DirtiesContext
     void shouldCreateNewBook(){
-        HttpEntity<Book> newBook = new HttpEntity<>(new Book("9l3at sraghna", 1440d, 5.0));
+        HttpEntity<Book> newBook = new HttpEntity<>(new Book("9l3at sraghna", 5.0));
 
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")

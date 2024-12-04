@@ -18,7 +18,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/users")
+@RequestMapping
 public class UserController {
 
     @Autowired
@@ -31,7 +31,7 @@ public class UserController {
         this.userRepository = userRepository;
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/nonAuth/users/{id}")
     public ResponseEntity<User> getUserById(@PathVariable("id") int userId){
         User user = userRepository.findById(userId);
         if(user == null){
@@ -40,7 +40,7 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    @GetMapping
+    @GetMapping("/nonAuth/users")
     public ResponseEntity<List<User>> findAllUsers(){
         List<User> allUsers = userRepository.findAll();
         if(allUsers != null){
@@ -50,7 +50,7 @@ public class UserController {
         }
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/users/{id}")
     public ResponseEntity<Void> modifyUserInfos(@PathVariable("id") int userId, @RequestBody User newUser){
         User user = userRepository.findById(userId);
         if(user == null){
@@ -77,7 +77,7 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/{id}/image") // TODO
+    @PutMapping("/users/{id}/image") // TODO
     public ResponseEntity<Void> modifyProfileImage(@PathVariable("id") int userId, @RequestParam("file") MultipartFile file)
             throws IOException {
         User user = userRepository.findById(userId);
@@ -92,7 +92,7 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/register")
+    @PostMapping("/users/register")
     public ResponseEntity<Void> createUser(@RequestBody User user, UriComponentsBuilder ucb){
 
         userService.register(user);
@@ -103,7 +103,7 @@ public class UserController {
         return ResponseEntity.created(location).build();
     }
 
-    @DeleteMapping("/admin/{id}")
+    @DeleteMapping("/users/admin/{id}")
     public ResponseEntity<Void> deletUserById(@PathVariable("id") int userId){
         User user = userRepository.findById(userId);
         if(user == null){

@@ -1,6 +1,5 @@
 package BookShop.demo.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.persistence.*;
 
@@ -17,7 +16,6 @@ public class Book {
     @Column(name = "book_id")
     private Integer id;
     private String name;
-    private Double price = -1.0;
     private Double rating = -1.0;
 
     @OneToMany(mappedBy = "book")
@@ -26,17 +24,16 @@ public class Book {
 
     protected Book(){}
 
-    public Book(String name, Double price, Double rating){
+    public Book(String name, Double rating){
         this.name = name;
-        this.price = price;
         this.rating = rating;
     }
 
 
     @Override
     public String toString(){
-        return String.format("Book [id = %d, name = %s, rating = %d, price = %d]",
-                id, name, price, rating);
+        return String.format("Book [id = %d, name = %s, rating = %d]",
+                id, name, rating);
     }
 
 
@@ -55,9 +52,6 @@ public class Book {
         return name;
     }
 
-    public Double getPrice() {
-        return price;
-    }
 
     public Double getRating() {
         return rating;
@@ -65,10 +59,6 @@ public class Book {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public void setPrice(double price) {
-        this.price = price;
     }
 
     public void setRating(double rating) {

@@ -13,8 +13,7 @@ DROP TABLE IF EXISTS BOOK cascade;
 CREATE TABLE Book(
      book_id int PRIMARY KEY,
      name VARCHAR,
-     price Long ,
-     rating Long,
+     rating DOUBLE,
      user_book_id int
 --     FOREIGN KEY(user_book_id) REFERENCES MY_USERS(user_id)
 );
@@ -27,6 +26,7 @@ CREATE TABLE STOCK(
     book_id int,
     user_id int,
     available_quantity int,
+    price DOUBLE,
     FOREIGN KEY (book_id) REFERENCES BOOK(book_id)  ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES MY_USERS(user_id)  ON DELETE CASCADE
 );

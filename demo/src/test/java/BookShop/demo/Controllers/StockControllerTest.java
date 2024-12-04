@@ -28,7 +28,7 @@ public class StockControllerTest {
     void shouldReturnStocksByUserWhenItExists(){
         ResponseEntity<String> reponse = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/stocks/ofUser/12", String.class);
+                .getForEntity("/nonAuth/stocks/ofUser/12", String.class);
 
         Assertions.assertEquals(reponse.getStatusCode(), HttpStatus.OK);
 
@@ -47,7 +47,7 @@ public class StockControllerTest {
     void shouldNotReturnStocksByUserWhenItDoesNotExist(){
         ResponseEntity<String> reponse = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/stocks/ofUser/189", String.class);
+                .getForEntity("/nonAuth/stocks/ofUser/189", String.class);
 
         Assertions.assertEquals(reponse.getStatusCode(), HttpStatus.NO_CONTENT);
 
@@ -57,7 +57,7 @@ public class StockControllerTest {
     void shouldReturnStocksByBookWhenItExists(){
         ResponseEntity<String> reponse = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/stocks/ofBook/12", String.class);
+                .getForEntity("/nonAuth/stocks/ofBook/12", String.class);
 
         Assertions.assertEquals(reponse.getStatusCode(), HttpStatus.OK);
 
@@ -76,7 +76,7 @@ public class StockControllerTest {
     void shouldNotReturnStocksByBookWhenItDoesNotExist(){
         ResponseEntity<String> reponse = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/stocks/ofBook/16", String.class);
+                .getForEntity("/nonAuth/stocks/ofBook/16", String.class);
 
         Assertions.assertEquals(reponse.getStatusCode(), HttpStatus.NO_CONTENT);
     }
@@ -85,7 +85,7 @@ public class StockControllerTest {
     void shouldReturnStockByBookAndUserWhenItExists(){
         ResponseEntity<Stock> reponse = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/stocks/ofUser/11/ofBook/12", Stock.class);
+                .getForEntity("/nonAuth/stocks/ofUser/11/ofBook/12", Stock.class);
 
         Assertions.assertEquals(reponse.getStatusCode(), HttpStatus.OK);
 
@@ -96,7 +96,7 @@ public class StockControllerTest {
     void shouldNotReturnStockByBookAndUserWhenItDoesNotExist(){
         ResponseEntity<Stock> reponse = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/stocks/ofUser/151/ofBook/129", Stock.class);
+                .getForEntity("/nonAuth/stocks/ofUser/151/ofBook/129", Stock.class);
 
         Assertions.assertEquals(reponse.getStatusCode(), HttpStatus.NO_CONTENT);
     }
@@ -105,7 +105,7 @@ public class StockControllerTest {
     @DirtiesContext
     void shouldChangeQuantityWhenExists(){
         // on ajoute la valeur 1650 à celle précédente, la précédente est 35
-        HttpEntity<Stock> newStock = new HttpEntity<>(new Stock(12, 12, 1650));
+        HttpEntity<Stock> newStock = new HttpEntity<>(new Stock(12, 12, 1650, 10.99));
 
         ResponseEntity<Void> responseEntity = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
@@ -115,7 +115,7 @@ public class StockControllerTest {
 
         ResponseEntity<Stock> stock = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/stocks/ofUser/12/ofBook/12", Stock.class);
+                .getForEntity("/nonAuth/stocks/ofUser/12/ofBook/12", Stock.class);
         Assertions.assertEquals(stock.getBody().getAvailableQuantity(), 1685);
     }
 
@@ -123,7 +123,7 @@ public class StockControllerTest {
     @DirtiesContext
     void shouldAddNewStock(){
         // le stock n'existe pas dans la DB
-        HttpEntity<StockCreator> newStock = new HttpEntity<>(new StockCreator(13, 11, 50));
+        HttpEntity<StockCreator> newStock = new HttpEntity<>(new StockCreator(13, 11, 50 ,15.99));
 
         ResponseEntity<Void> stock = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
@@ -144,7 +144,7 @@ public class StockControllerTest {
 
         response = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/stocks/ofUser/13/ofBook/12", Void.class);
+                .getForEntity("/nonAuth/stocks/ofUser/13/ofBook/12", Void.class);
 
         Assertions.assertEquals(response.getStatusCode(), HttpStatus.NO_CONTENT);
     }
