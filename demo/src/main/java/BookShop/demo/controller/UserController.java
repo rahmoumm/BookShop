@@ -6,7 +6,10 @@ import BookShop.demo.repository.UserRepository;
 import BookShop.demo.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,10 +54,20 @@ public class UserController {
     }
 
     @PutMapping("/users/{id}")
-    public ResponseEntity<Void> modifyUserInfos(@PathVariable("id") int userId, @RequestBody User newUser){
+    public ResponseEntity<Void> modifyUserInfos
+            (@PathVariable("id") int userId, @RequestBody User newUser, @AuthenticationPrincipal UserDetails userDetails){
         User user = userRepository.findById(userId);
         if(user == null){
             return ResponseEntity.notFound().build();
+        }
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        String email = authentication.getName();
+
+        String email = userDetails.getUsername();
+        String role = userDetails.getAuthorities().toString();
+
+        if(!role.contains("ROLE_ADMIN") && !email.equals(user.getEmail()) ){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         if(newUser.getEmail() != null){
@@ -77,12 +90,20 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/users/{id}/image") // TODO
-    public ResponseEntity<Void> modifyProfileImage(@PathVariable("id") int userId, @RequestParam("file") MultipartFile file)
+    @PutMapping("/users/{id}/image")
+    public ResponseEntity<Void> modifyProfileImage
+            (@PathVariable("id") int userId, @RequestParam("file") MultipartFile file, @AuthenticationPrincipal UserDetails userDetails)
             throws IOException {
         User user = userRepository.findById(userId);
         if(user == null){
             return ResponseEntity.notFound().build();
+        }
+
+        String email = userDetails.getUsername();
+        String role = userDetails.getAuthorities().toString();
+
+        if(!role.contains("ROLE_ADMIN") && !email.equals(user.getEmail())){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         user.setImage(file.getBytes());
@@ -95,6 +116,10 @@ public class UserController {
     @PostMapping("/users/register")
     public ResponseEntity<Void> createUser(@RequestBody User user, UriComponentsBuilder ucb){
 
+        if(userRepository.existsByEmail(user.getEmail())){
+            return ResponseEntity.badRequest().build();
+        }
+
         userService.register(user);
         URI location = ucb
                 .path("/users/{id}")
@@ -103,7 +128,7 @@ public class UserController {
         return ResponseEntity.created(location).build();
     }
 
-    @DeleteMapping("/users/admin/{id}")
+    @DeleteMapping("/admin/users/{id}")
     public ResponseEntity<Void> deletUserById(@PathVariable("id") int userId){
         User user = userRepository.findById(userId);
         if(user == null){

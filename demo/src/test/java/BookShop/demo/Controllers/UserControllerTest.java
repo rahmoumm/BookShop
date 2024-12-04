@@ -25,6 +25,7 @@ public class UserControllerTest {
     private TestRestTemplate restTemplate;
 
 
+    // GET TESTS
     @Test
     void shouldReturnAllUsersWhenDataExists(){
         ResponseEntity<String> reponse = restTemplate
@@ -68,6 +69,7 @@ public class UserControllerTest {
         Assertions.assertEquals(reponse.getStatusCode(), HttpStatus.NOT_FOUND);
     }
 
+    // PUT TESTS
     @Test
     @DirtiesContext
     void shouldChangeAUserWhenItExists(){
@@ -96,6 +98,7 @@ public class UserControllerTest {
         Assertions.assertEquals(responseEntity.getStatusCode(), HttpStatus.NOT_FOUND);
     }
 
+    // POST TESTS
     @Test
     @DirtiesContext
     void shouldCreateNewUser(){
@@ -108,13 +111,15 @@ public class UserControllerTest {
         Assertions.assertEquals(response.getStatusCode(), HttpStatus.CREATED);
     }
 
+
+
     @Test
     @DirtiesContext
     void shouldeDeleteUserWhenExists(){
         // Faire attention parceque tu deletais le user avec lequel tu travaillais
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .exchange("/users/admin/13", HttpMethod.DELETE, null, Void.class);
+                .exchange("/admin/users/13", HttpMethod.DELETE, null, Void.class);
 
         Assertions.assertEquals(response.getStatusCode(), HttpStatus.OK);
 
@@ -131,7 +136,7 @@ public class UserControllerTest {
 
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .exchange("/users/admin/159", HttpMethod.DELETE, null, Void.class);
+                .exchange("/admin/users/159", HttpMethod.DELETE, null, Void.class);
 
         Assertions.assertEquals(response.getStatusCode(), HttpStatus.NOT_FOUND);
 

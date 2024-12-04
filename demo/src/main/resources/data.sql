@@ -24,4 +24,5 @@ INSERT INTO ROLE(role_id, role_name) VALUES(2, 'SELLER');
 INSERT INTO ROLE(role_id, role_name) VALUES(3, 'USER');
 
 INSERT INTO USERS_ROLE(user_id, role_id) VALUES(11, 1);
+INSERT INTO USERS_ROLE(user_id, role_id) VALUES(11, 2);
 INSERT INTO USERS_ROLE(user_id, role_id) VALUES(12, 2);

@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface UserRepository extends CrudRepository<User, Integer> {
     User findById(int id);
+    boolean existsByEmail(String email);
     Void deleteById(int id);
     User findByEmail(String email);
     List<User> findAll();
