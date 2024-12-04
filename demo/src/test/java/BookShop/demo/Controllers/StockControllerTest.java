@@ -103,13 +103,13 @@ public class StockControllerTest {
 
     @Test
     @DirtiesContext
-    void shouldChangeQuantityWhenExists(){
+    void shouldUpdateWhenExists(){
         // on ajoute la valeur 1650 à celle précédente, la précédente est 35
         HttpEntity<Stock> newStock = new HttpEntity<>(new Stock(12, 12, 1650, 10.99));
 
         ResponseEntity<Void> responseEntity = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .exchange("/stocks/ofUser/12/ofBook/12", HttpMethod.PUT, newStock, Void.class);
+                .exchange("/seller/stocks/ofUser/12/ofBook/12", HttpMethod.PUT, newStock, Void.class);
 
         Assertions.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
 
@@ -127,7 +127,7 @@ public class StockControllerTest {
 
         ResponseEntity<Void> stock = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .postForEntity("/stocks", newStock, Void.class);
+                .postForEntity("/seller/stocks", newStock, Void.class);
 
         Assertions.assertEquals(stock.getStatusCode(), HttpStatus.CREATED);
     }
@@ -138,7 +138,7 @@ public class StockControllerTest {
         // Faire attention parceque tu deletais le user avec lequel tu travaillais
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .exchange("/stocks/ofUser/13/ofBook/12", HttpMethod.DELETE, null, Void.class);
+                .exchange("/seller/stocks/ofUser/13/ofBook/12", HttpMethod.DELETE, null, Void.class);
 
         Assertions.assertEquals(response.getStatusCode(), HttpStatus.OK);
 
@@ -156,7 +156,7 @@ public class StockControllerTest {
 
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .exchange("/stocks/ofUser/130/ofBook/13", HttpMethod.DELETE, null, Void.class);
+                .exchange("/seller/stocks/ofUser/130/ofBook/13", HttpMethod.DELETE, null, Void.class);
 
         Assertions.assertEquals(response.getStatusCode(), HttpStatus.NOT_FOUND);
 

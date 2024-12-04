@@ -10,8 +10,12 @@ import BookShop.demo.repository.StockRepository;
 import BookShop.demo.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -66,9 +70,22 @@ public class StockController {
         return ResponseEntity.ok(stock);
     }
 
-    @PutMapping("/stocks/ofUser/{userId}/ofBook/{bookId}")
-    public ResponseEntity<Void> restockBook(@PathVariable int userId, @PathVariable int bookId, @RequestBody Stock newStock){
+    @PutMapping("/seller/stocks/ofUser/{userId}/ofBook/{bookId}")
+    public ResponseEntity<Void> restockBook
+            (@PathVariable int userId, @PathVariable int bookId,
+             @RequestBody Stock newStock, @AuthenticationPrincipal UserDetails userDetails){
         Stock stock = stockRepository.findByUserIdAndBookId(userId, bookId);
+        User userAuth = userRepository.findByEmail(userDetails.getUsername());
+
+        String role = userDetails.getAuthorities().toString();
+
+        if(userAuth.getId() != userId &&  !role.contains("ROLE_ADMIN")){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        if(stock == null){
+            return ResponseEntity.notFound().build();
+        }
+
         if(newStock.getPrice() != -1d){
             stock.setPrice(newStock.getPrice());
         }
@@ -80,11 +97,19 @@ public class StockController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/stocks")
-    public ResponseEntity<Void> createStock(@RequestBody StockCreator stockCreator, UriComponentsBuilder ucb){
+    @PostMapping("/seller/stocks")
+    public ResponseEntity<Void> createStock
+            (@RequestBody StockCreator stockCreator, UriComponentsBuilder ucb,
+             @AuthenticationPrincipal UserDetails userDetails){
 
         Book book = bookRepository.findById(stockCreator.getBook_id());
         User user = userRepository.findById(stockCreator.getUser_id());
+
+        String role = userDetails.getAuthorities().toString();
+
+        if(userDetails.getUsername() != user.getEmail() && !role.contains("ROLE_ADMIN")){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         Stock stock = new Stock(user, book, stockCreator.getAvailabe_quantity(), stockCreator.getPrice());
 
@@ -102,9 +127,20 @@ public class StockController {
         return ResponseEntity.created(uri).build();
     }
 
-    @DeleteMapping("/stocks/ofUser/{userId}/ofBook/{bookId}")
-    public ResponseEntity<Void> deleteStock(@PathVariable int userId, @PathVariable int bookId){
+    @DeleteMapping("/seller/stocks/ofUser/{userId}/ofBook/{bookId}")
+    public ResponseEntity<Void> deleteStock
+            (@PathVariable int userId, @PathVariable int bookId,
+             @AuthenticationPrincipal UserDetails userDetails){
         Stock stock = stockRepository.findByUserIdAndBookId(userId, bookId);
+        User user = userRepository.findById(userId);
+
+        String email = userDetails.getUsername();
+        String role = userDetails.getAuthorities().toString();
+
+        if(!role.contains("ROLE_ADMIN") && !email.equals(user.getEmail())){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         if(stock == null){
             return ResponseEntity.notFound().build();
         }
