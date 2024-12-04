@@ -84,7 +84,7 @@ public class BookControllerTest {
     void shouldReturnNotFoundIfDoNotExist(){
         ResponseEntity<String> reponse = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/books/1111", String.class);
+                .getForEntity("/nonAuth/books/1111", String.class);
 
         Assertions.assertEquals(reponse.getStatusCode(), HttpStatus.NOT_FOUND);
     }
@@ -97,7 +97,7 @@ public class BookControllerTest {
         // exchange
         ResponseEntity<Void> responseEntity = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .exchange("/books/reserved/11", HttpMethod.PUT, newBook, Void.class);
+                .exchange("/books/11", HttpMethod.PUT, newBook, Void.class);
 
         Assertions.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
 
@@ -113,7 +113,7 @@ public class BookControllerTest {
 
         ResponseEntity<Void> responseEntity = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .exchange("/books/reserved/1111", HttpMethod.PUT, newBook, Void.class);
+                .exchange("/books/1111", HttpMethod.PUT, newBook, Void.class);
 
         Assertions.assertEquals(responseEntity.getStatusCode(), HttpStatus.NOT_FOUND);
     }
@@ -128,7 +128,7 @@ public class BookControllerTest {
 
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .postForEntity("/books/reserved", newBook, Void.class);
+                .postForEntity("/seller/books", newBook, Void.class);
 
         Assertions.assertEquals(response.getStatusCode(), HttpStatus.CREATED);
     }
@@ -141,13 +141,13 @@ public class BookControllerTest {
 
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .exchange("/books/reserved/11", HttpMethod.DELETE, null, Void.class);
+                .exchange("/admin/books/11", HttpMethod.DELETE, null, Void.class);
 
         Assertions.assertEquals(response.getStatusCode(), HttpStatus.OK);
 
         response = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .getForEntity("/books/11", Void.class);
+                .getForEntity("/nonAuth/books/11", Void.class);
 
         Assertions.assertEquals(response.getStatusCode(), HttpStatus.NOT_FOUND);
 
@@ -158,7 +158,7 @@ public class BookControllerTest {
 
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("m@gmail.com", "abc")
-                .exchange("/books/reserved/1111", HttpMethod.DELETE, null, Void.class);
+                .exchange("/admin/books/1111", HttpMethod.DELETE, null, Void.class);
 
         Assertions.assertEquals(response.getStatusCode(), HttpStatus.NOT_FOUND);
 

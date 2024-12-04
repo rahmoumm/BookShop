@@ -37,9 +37,11 @@ public class SecurityConfig {
         // ==> You need to mention it also
         http
                 .authorizeHttpRequests((authorize) -> authorize
-                        .requestMatchers("/nonAuth/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/users/admin/**").hasRole("OWNER")
+                        .requestMatchers("/nonAuth/**").permitAll()
+                        .requestMatchers("/seller/**").hasRole("SELLER")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+
 //                        .requestMatchers("/books/reserved/**").hasAuthority("SELLER")
                         .anyRequest().authenticated()
                 );
@@ -64,8 +66,8 @@ public class SecurityConfig {
     @Bean
     static RoleHierarchy roleHierarchy() {
         return RoleHierarchyImpl.withDefaultRolePrefix()
-                .role("ADMIN").implies("OWNER")
-                .role("OWNER").implies("USER")
+                .role("ADMIN").implies("SELLER")
+                .role("SELLER").implies("USER")
                 .build();
     }
 

@@ -38,9 +38,6 @@ public class BookController {
     @GetMapping("/nonAuth/books")
     public ResponseEntity<List<Book>> findAllBooks(){
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        log.info(authentication.getAuthorities().toString());
-
         List<Book> allBooks = bookRepository.findAll();
         if(allBooks != null){
             return ResponseEntity.ok(allBooks);
@@ -49,7 +46,7 @@ public class BookController {
         }
     }
 
-    @PutMapping("/books/reserved/{bookId}")
+    @PutMapping("/books/{bookId}")
     public ResponseEntity<Void> updateBook(@PathVariable("bookId") int bookId, @RequestBody Book newBook){
         Book book = bookRepository.findById(bookId);
         if(book == null){
@@ -67,12 +64,10 @@ public class BookController {
         }
     }
 
-    @PostMapping("/books/reserved")
+    @PostMapping("/seller/books")
     public ResponseEntity<Void> createBook(@RequestBody Book newBook, UriComponentsBuilder ucb){
 
-
-//        Book book =
-                bookRepository.save(newBook);
+         bookRepository.save(newBook);
         URI location = ucb
                 .path("/books/{id}")
                 .buildAndExpand(newBook.getId())
@@ -80,7 +75,7 @@ public class BookController {
         return ResponseEntity.created(location).build();
     }
 
-    @DeleteMapping("/books/reserved/{bookId}")
+    @DeleteMapping("/admin/books/{bookId}")
     public ResponseEntity<Void> deleteBook(@PathVariable("bookId") int bookId){
         Book book = bookRepository.findById(bookId);
         if(book == null){
