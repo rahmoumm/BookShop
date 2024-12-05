@@ -28,6 +28,9 @@ public class User {
     @OneToMany(mappedBy = "user")
     List<Stock> bookStocks = new ArrayList<>();
 
+    @OneToOne(mappedBy = "purchaser",cascade = CascadeType.ALL)
+    private Basket basket;
+
     public List<Role> getRoles() {
         return roles;
     }

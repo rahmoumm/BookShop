@@ -11,7 +11,6 @@ import BookShop.demo.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -39,7 +38,6 @@ public class StockController {
     private UserRepository userRepository;
 
     @GetMapping("/nonAuth/stocks/ofUser/{userId}")
-
     public ResponseEntity<List<Stock>> findStockOfUser(@PathVariable int userId){
 
         List<Stock> usersStock = stockRepository.findByUserId(userId);

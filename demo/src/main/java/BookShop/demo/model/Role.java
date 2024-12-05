@@ -22,7 +22,6 @@ public class Role {
     // the user's role, when looking into a role, he finds users and it does never end ( infinite loop )
     @JsonIgnore
     @ManyToMany(mappedBy = "roles")
-
     List<User> users = new ArrayList<>();
 
     public int getId() {

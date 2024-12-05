@@ -18,6 +18,7 @@ public class Book {
     private String name;
     private Double rating = -1.0;
 
+    // MappedBy est utilisé quand on veut que le relation soit bidirectionnel
     @OneToMany(mappedBy = "book")
     List<Stock> presentIn = new ArrayList<>();
 

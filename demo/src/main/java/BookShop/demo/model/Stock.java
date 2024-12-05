@@ -24,9 +24,7 @@ public class Stock {
 
     @Column(name = "available_quantity")
     private Integer availableQuantity = -1;
-
-
-
+    
     @Column(name = "price")
     private Double price = -1d;
 
