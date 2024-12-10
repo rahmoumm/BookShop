@@ -15,6 +15,13 @@ public class StockCreator {
         this.price = price;
     }
 
+    public StockCreator(int user_id, int book_id) {
+        this.user_id = user_id;
+        this.book_id = book_id;
+    }
+
+    public StockCreator(){}
+
     public int getUser_id() {
         return user_id;
     }

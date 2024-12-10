@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "BOOK")
@@ -16,12 +18,14 @@ public class Book {
     @Column(name = "book_id")
     private Integer id;
     private String name;
-    private Double rating = -1.0;
+    private Double rating = 0d;
 
     // MappedBy est utilisé quand on veut que le relation soit bidirectionnel
     @OneToMany(mappedBy = "book")
     List<Stock> presentIn = new ArrayList<>();
 
+//    @ManyToMany(mappedBy = "wantedBooks")
+//    Set<Basket> baskets = new HashSet<>();
 
     protected Book(){}
 
@@ -33,7 +37,7 @@ public class Book {
 
     @Override
     public String toString(){
-        return String.format("Book [id = %d, name = %s, rating = %d]",
+        return String.format("Book [id = %d, name = %s, rating = %f]",
                 id, name, rating);
     }
 
@@ -52,7 +56,6 @@ public class Book {
     public String getName() {
         return name;
     }
-
 
     public Double getRating() {
         return rating;

@@ -7,4 +7,6 @@ public interface BasketRepository extends CrudRepository<Basket, Integer> {
 
     Basket findByPurchaserId(Integer userId);
     boolean existsByPurchaserId(Integer userId);
+    Void deleteById(int id);
+
 }

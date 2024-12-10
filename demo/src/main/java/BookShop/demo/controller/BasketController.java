@@ -6,6 +6,7 @@ import BookShop.demo.repository.BasketRepository;
 import BookShop.demo.repository.BookRepository;
 import BookShop.demo.repository.StockRepository;
 import BookShop.demo.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 
+@Slf4j
 @RestController
 @RequestMapping
 public class BasketController {
@@ -38,7 +40,7 @@ public class BasketController {
 
         User actualUser = userRepository.findByEmail(userDetails.getUsername());
 
-        if(basketRepository.existsById(actualUser.getId())){
+        if(basketRepository.existsByPurchaserId(actualUser.getId())){
            Basket basket = basketRepository.findByPurchaserId(actualUser.getId());
            return ResponseEntity.ok(basket);
         }
@@ -50,10 +52,11 @@ public class BasketController {
     public ResponseEntity<Basket> getUserBasket(@PathVariable int userId){
 
         if(basketRepository.existsByPurchaserId(userId)){
-            return ResponseEntity.notFound().build();
+            Basket basket = basketRepository.findByPurchaserId(userId);
+            return ResponseEntity.ok(basket);
         }
-        Basket basket = basketRepository.findByPurchaserId(userId);
-        return ResponseEntity.ok(basket);
+        return ResponseEntity.notFound().build();
+
     }
 
     // We add from a stock
@@ -74,11 +77,12 @@ public class BasketController {
         Book wantedBook = bookRepository.findById(bookStock.getBook_id());
 
         Basket relatedBasket = basketRepository.findByPurchaserId(authUser.getId());
-        relatedBasket.getWantedBooks().add(wantedBook);
+        relatedBasket.addBook(wantedBook);
+
         relatedBasket.addAmount(sourceStock.getPrice());
 
         basketRepository.save(relatedBasket);
-
+        log.info(basketRepository.findByPurchaserId(userId).toString());
         return ResponseEntity.ok().build();
     }
 
@@ -108,7 +112,7 @@ public class BasketController {
     }
 
     @PostMapping("/basket/{userId}/creation")
-    public ResponseEntity<Void> createBasket
+    public ResponseEntity<String> createBasket
             (@PathVariable int userId, @AuthenticationPrincipal UserDetails userDetails,
              UriComponentsBuilder ucb){
 
@@ -116,17 +120,22 @@ public class BasketController {
         User authUser = userRepository.findByEmail(userDetails.getUsername());
         String authRole = userDetails.getAuthorities().toString();
 
+        log.info("Avant l'auht");
         if(!authRole.contains("ROLE_ADMIN") && authUser.getId() != basketOwner.getId() ){
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+        log.info("Apres l'auht");
 
-        Basket newBasket = new Basket(authUser);
+        Basket newBasket = new Basket(basketOwner);
+        log.info(newBasket.toString());
+        log.info("Apres la création de basket");
 
         basketRepository.save(newBasket);
+        log.info("Apres la sauvegarde de basket");
 
         URI uri = ucb
                 .path("/basket/{userId}")
-                .buildAndExpand(authUser.getId())
+                .buildAndExpand(basketOwner.getId())
                 .toUri();
         return ResponseEntity.created(uri).build();
     }
@@ -137,11 +146,16 @@ public class BasketController {
 
         User actualUser = userRepository.findByEmail(userDetails.getUsername());
         String authRole = userDetails.getAuthorities().toString();
+
         if(!authRole.contains("ROLE_ADMIN") && actualUser.getId() != userId){
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-
-        basketRepository.delete(basketRepository.findByPurchaserId(userId));
+        Basket basket = basketRepository.findByPurchaserId(userId);
+        log.info(basket.toString());
+        // It is important to do setPurchaser(null), because our basket has
+        // a relationship with User, and it will not delete it if it is linked to a user
+        basket.setPurchaser(null);
+        basketRepository.deleteById(basket.getId());
         return ResponseEntity.ok().build();
     }
 

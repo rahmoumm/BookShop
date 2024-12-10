@@ -36,3 +36,10 @@ CREATE TABLE ROLE(
     role_id int,
     role_name VARCHAR
 );
+
+DROP TABLE IF EXISTS BASKET CASCADE;
+CREATE TABLE BASKET(
+    basket_id int,
+    user_id int,
+    total_amount double
+);

@@ -4,6 +4,8 @@ package BookShop.demo.model;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -18,23 +20,26 @@ public class Basket {
     @JoinColumn(name = "user_id")
     private User purchaser;
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
             name = "books_in_basket",
             joinColumns = @JoinColumn(name="basket_id"),
             inverseJoinColumns = @JoinColumn(name = "book_id")
     )
-    private Set<Book> wantedBooks = new HashSet<>();
-
-    public Basket(User purchaser) {
-        this.purchaser = purchaser;
-        this.totalAmount = 0d;
-    }
-
-
+    private List<Book> wantedBooks = new LinkedList<>();
 
     @Column(name = "total_amount")
     private Double totalAmount;
+
+    public Basket(User purchaser) {
+        this.purchaser = purchaser;
+        this.id = purchaser.getId();
+        this.totalAmount = 0d;
+    }
+
+    public Basket(){}
+
+
 
     public Double getTotalAmount() {
         return totalAmount;
@@ -48,7 +53,7 @@ public class Basket {
         return this.id;
     }
 
-    public Set<Book> getWantedBooks() {
+    public List<Book> getWantedBooks() {
         return this.wantedBooks;
     }
 
@@ -58,6 +63,14 @@ public class Basket {
 
     public void deductAmount(Double amountToAdd){
         this.totalAmount -= amountToAdd;
+    }
+
+    public void setPurchaser(User purchaser) {
+        this.purchaser = purchaser;
+    }
+
+    public void addBook(Book book){
+        this.wantedBooks.add(book);
     }
 
     @Override
