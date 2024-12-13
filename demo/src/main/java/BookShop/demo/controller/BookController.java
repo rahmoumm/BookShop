@@ -1,9 +1,15 @@
 package BookShop.demo.controller;
 
 
+import BookShop.demo.Exceptions.NoContentFoundException;
+import BookShop.demo.Exceptions.RessourceNotFoundException;
 import BookShop.demo.model.Book;
+import BookShop.demo.model.ErrorReport;
 import BookShop.demo.repository.BookRepository;
+import BookShop.demo.service.BookService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.*;
@@ -24,65 +30,53 @@ public class BookController {
     }
     private final BookRepository bookRepository;
 
+    @Autowired
+    private BookService bookService;
+
+    @ExceptionHandler(value = RessourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorReport handleRessourceNotFoundException(RessourceNotFoundException ex) {
+        return new ErrorReport(HttpStatus.NOT_FOUND.value(), ex.getMessage());
+    }
+
+    @ExceptionHandler(value = NoContentFoundException.class)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ErrorReport handleNoContentFoundException(NoContentFoundException ex) {
+        return new ErrorReport(HttpStatus.NO_CONTENT.value(), ex.getMessage());
+    }
+
     @GetMapping("/nonAuth/books/{bookId}")
-    public ResponseEntity<Book> getUserById(@PathVariable int bookId){
-        Book book = bookRepository.findById(bookId);
-        if(book != null){
-            return ResponseEntity.ok(book);
-        }else{
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<Book> getBookById(@PathVariable int bookId) throws RessourceNotFoundException {
+            Book book = bookService.getBookById(bookId);
+            return new ResponseEntity<>(book, HttpStatus.OK);
     }
 
     @GetMapping("/nonAuth/books")
-    public ResponseEntity<List<Book>> findAllBooks(){
-
-        List<Book> allBooks = bookRepository.findAll();
-        if(allBooks != null){
-            return ResponseEntity.ok(allBooks);
-        }else{
-            return ResponseEntity.noContent().build();
-        }
+    public ResponseEntity<List<Book>> findAllBooks() throws NoContentFoundException{
+        List<Book> allBooks = bookService.findAllBooks();
+        return new ResponseEntity<>(allBooks, HttpStatus.OK);
     }
 
     @PutMapping("/books/{bookId}")
-    public ResponseEntity<Void> updateBook(@PathVariable("bookId") int bookId, @RequestBody Book newBook){
-        Book book = bookRepository.findById(bookId);
-        if(book == null){
-            return ResponseEntity.notFound().build();
-        }else{
-            if(newBook.getRating() != -1){
-                book.setRating(newBook.getRating());
-            }
-            if(newBook.getName() != null){
-                book.setName(newBook.getName());
-            }
-            log.info(book.getRating().toString());
-            bookRepository.save(book);
-            return ResponseEntity.ok().build();
-        }
+    public ResponseEntity<Void> updateBook
+            (@PathVariable("bookId") int bookId, @RequestBody Book newBook)
+            throws RessourceNotFoundException{
+
+        bookService.updateBook(bookId, newBook);
+        return new ResponseEntity<>(null, HttpStatus.OK);
     }
 
     @PostMapping("/seller/books")
-    public ResponseEntity<Void> createBook(@RequestBody Book newBook, UriComponentsBuilder ucb){
-
-         bookRepository.save(newBook);
-        URI location = ucb
-                .path("/books/{id}")
-                .buildAndExpand(newBook.getId())
-                .toUri();
+    public ResponseEntity<String> createBook(@RequestBody Book newBook, UriComponentsBuilder ucb){
+        URI location = bookService.createBook(newBook, ucb);
         return ResponseEntity.created(location).build();
     }
 
     @DeleteMapping("/admin/books/{bookId}")
-    public ResponseEntity<Void> deleteBook(@PathVariable("bookId") int bookId){
-        Book book = bookRepository.findById(bookId);
-        if(book == null){
-            return ResponseEntity.notFound().build();
-        }else{
-            bookRepository.deleteById(bookId);
-            return ResponseEntity.ok().build();
-        }
+    public void deleteBook(@PathVariable("bookId") int bookId)
+            throws RessourceNotFoundException{
+
+        bookService.deleteBook(bookId);
     }
 
 }

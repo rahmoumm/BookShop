@@ -1,6 +1,11 @@
 package BookShop.demo.controller;
 
 
+import BookShop.demo.Exceptions.EmailAlreadyExistsException;
+import BookShop.demo.Exceptions.NoContentFoundException;
+import BookShop.demo.Exceptions.RessourceNotFoundException;
+import BookShop.demo.Exceptions.UserNotAuthorizedToDoThisActionException;
+import BookShop.demo.model.ErrorReport;
 import BookShop.demo.model.User;
 import BookShop.demo.repository.UserRepository;
 import BookShop.demo.service.UserService;
@@ -24,117 +29,81 @@ import java.util.List;
 @RequestMapping
 public class UserController {
 
-    @Autowired
-    private final UserRepository userRepository;
 
     @Autowired
-    UserService userService;
+    private UserService userService;
+
+    @ExceptionHandler(value = RessourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorReport handleRessourceNotFoundException(RessourceNotFoundException ex) {
+        return new ErrorReport(HttpStatus.NOT_FOUND.value(), ex.getMessage());
+    }
+
+    @ExceptionHandler(value = NoContentFoundException.class)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ErrorReport handleNoContentFoundException(NoContentFoundException ex) {
+        return new ErrorReport(HttpStatus.NO_CONTENT.value(), ex.getMessage());
+    }
+
+    @ExceptionHandler(value = UserNotAuthorizedToDoThisActionException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorReport handleUserNotAuthorizedToDoThisActionException(UserNotAuthorizedToDoThisActionException ex) {
+        return new ErrorReport(HttpStatus.FORBIDDEN.value(), ex.getMessage());
+    }
+
+    @ExceptionHandler(value = EmailAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorReport handleUserEmailAlreadyExistsException(EmailAlreadyExistsException ex) {
+        return new ErrorReport(HttpStatus.CONFLICT.value(), ex.getMessage());
+    }
 
     private UserController(UserRepository userRepository){
-        this.userRepository = userRepository;
+
     }
 
     @GetMapping("/nonAuth/users/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable("id") int userId){
-        User user = userRepository.findById(userId);
-        if(user == null){
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<User> getUserById(@PathVariable("id") int userId) throws RessourceNotFoundException{
+        User user = userService.getUserById(userId);
         return ResponseEntity.ok(user);
     }
 
     @GetMapping("/nonAuth/users")
-    public ResponseEntity<List<User>> findAllUsers(){
-        List<User> allUsers = userRepository.findAll();
-        if(allUsers != null){
-            return ResponseEntity.ok(allUsers);
-        }else{
-            return ResponseEntity.noContent().build();
-        }
+    public ResponseEntity<List<User>> findAllUsers() throws NoContentFoundException{
+        List<User> allUsers = userService.findAllUsers();
+        return ResponseEntity.ok(allUsers);
+
     }
 
     @PutMapping("/users/{id}")
     public ResponseEntity<Void> modifyUserInfos
-            (@PathVariable("id") int userId, @RequestBody User newUser, @AuthenticationPrincipal UserDetails userDetails){
-        User user = userRepository.findById(userId);
-        if(user == null){
-            return ResponseEntity.notFound().build();
-        }
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        String email = authentication.getName();
+            (@PathVariable("id") int userId, @RequestBody User newUser, @AuthenticationPrincipal UserDetails userDetails)
+            throws RessourceNotFoundException, UserNotAuthorizedToDoThisActionException {
 
-        String email = userDetails.getUsername();
-        String role = userDetails.getAuthorities().toString();
-
-        if(!role.contains("ROLE_ADMIN") && !email.equals(user.getEmail()) ){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        if(newUser.getEmail() != null){
-            user.setEmail(newUser.getEmail());
-        }
-        if(newUser.getFirstName() != null){
-            user.setFirstName(newUser.getFirstName());
-        }
-        if(newUser.getLastName() != null){
-            user.setLastName(newUser.getLastName());
-        }
-        if(newUser.getPassword() != null){
-            user.setPassword(  new BCryptPasswordEncoder(10).encode(newUser.getPassword()) );
-        }
-        if(newUser.getImage() != null){
-            user.setImage(newUser.getImage());
-        }
-
-        userRepository.save(user);
+        userService.modifyUserInfos(userId, newUser, userDetails);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/users/{id}/image")
     public ResponseEntity<Void> modifyProfileImage
             (@PathVariable("id") int userId, @RequestParam("file") MultipartFile file, @AuthenticationPrincipal UserDetails userDetails)
-            throws IOException {
-        User user = userRepository.findById(userId);
-        if(user == null){
-            return ResponseEntity.notFound().build();
-        }
+            throws IOException, UserNotAuthorizedToDoThisActionException, RessourceNotFoundException {
 
-        String email = userDetails.getUsername();
-        String role = userDetails.getAuthorities().toString();
-
-        if(!role.contains("ROLE_ADMIN") && !email.equals(user.getEmail())){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        user.setImage(file.getBytes());
-
-
-        userRepository.save(user);
+        userService.modifyProfileImage(userId, file, userDetails);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/users/register")
-    public ResponseEntity<Void> createUser(@RequestBody User user, UriComponentsBuilder ucb){
+    public ResponseEntity<Void> createUser(@RequestBody User user, UriComponentsBuilder ucb)
+    throws EmailAlreadyExistsException {
 
-        if(userRepository.existsByEmail(user.getEmail())){
-            return ResponseEntity.badRequest().build();
-        }
-
-        userService.register(user);
-        URI location = ucb
-                .path("/users/{id}")
-                .buildAndExpand(user.getId())
-                .toUri();
+        URI location = userService.register(user, ucb);
         return ResponseEntity.created(location).build();
     }
 
     @DeleteMapping("/admin/users/{id}")
-    public ResponseEntity<Void> deletUserById(@PathVariable("id") int userId){
-        User user = userRepository.findById(userId);
-        if(user == null){
-            return ResponseEntity.notFound().build();
-        }
-        userRepository.deleteById(userId);
+    public ResponseEntity<Void> deletUserById(@PathVariable("id") int userId, @AuthenticationPrincipal UserDetails userDetails)
+        throws RessourceNotFoundException, UserNotAuthorizedToDoThisActionException{
+        userService.deletUserById(userId, userDetails);
         return ResponseEntity.ok().build();
     }
 

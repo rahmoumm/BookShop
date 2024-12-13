@@ -1,11 +1,12 @@
 package BookShop.demo.controller;
 
 
+import BookShop.demo.Exceptions.NoContentFoundException;
+import BookShop.demo.Exceptions.RessourceNotFoundException;
+import BookShop.demo.Exceptions.UserNotAuthorizedToDoThisActionException;
 import BookShop.demo.model.*;
-import BookShop.demo.repository.BasketRepository;
-import BookShop.demo.repository.BookRepository;
-import BookShop.demo.repository.StockRepository;
-import BookShop.demo.repository.UserRepository;
+
+import BookShop.demo.service.BasketService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,40 +23,38 @@ import java.net.URI;
 @RequestMapping
 public class BasketController {
 
-    @Autowired
-    private UserRepository userRepository;
+    @ExceptionHandler(value = RessourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorReport handleRessourceNotFoundException(RessourceNotFoundException ex) {
+        return new ErrorReport(HttpStatus.NOT_FOUND.value(), ex.getMessage());
+    }
+
+    @ExceptionHandler(value = NoContentFoundException.class)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ErrorReport handleNoContentFoundException(NoContentFoundException ex) {
+        return new ErrorReport(HttpStatus.NO_CONTENT.value(), ex.getMessage());
+    }
 
     @Autowired
-    private BasketRepository basketRepository;
-
-    @Autowired
-    private StockRepository stockRepository;
-
-    @Autowired
-    private BookRepository bookRepository;
+    private BasketService basketService;
 
     // A user should only be allowed to acces its basket
     @GetMapping("/basket/personal")
-    public ResponseEntity<Basket> getUsersOwnBasket(@AuthenticationPrincipal UserDetails userDetails){
+    public ResponseEntity<Basket> getUsersOwnBasket(@AuthenticationPrincipal UserDetails userDetails)
+    throws RessourceNotFoundException {
 
-        User actualUser = userRepository.findByEmail(userDetails.getUsername());
+        Basket basket = basketService.getUsersOwnBasket(userDetails);
 
-        if(basketRepository.existsByPurchaserId(actualUser.getId())){
-           Basket basket = basketRepository.findByPurchaserId(actualUser.getId());
-           return ResponseEntity.ok(basket);
-        }
-
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(basket);
     }
 
     @GetMapping("/basket/{userId}")
-    public ResponseEntity<Basket> getUserBasket(@PathVariable int userId){
+    public ResponseEntity<Basket> getUserBasket(@PathVariable int userId)
+    throws RessourceNotFoundException{
 
-        if(basketRepository.existsByPurchaserId(userId)){
-            Basket basket = basketRepository.findByPurchaserId(userId);
-            return ResponseEntity.ok(basket);
-        }
-        return ResponseEntity.notFound().build();
+        Basket basket = basketService.getUserBasket(userId);
+
+        return ResponseEntity.ok(basket);
 
     }
 
@@ -63,50 +62,20 @@ public class BasketController {
     @PutMapping("/basket/{userId}/addBook")
     public ResponseEntity<Void> modifyBasket
         (@PathVariable int userId, @RequestBody StockCreator bookStock,
-         @AuthenticationPrincipal UserDetails userDetails){
+         @AuthenticationPrincipal UserDetails userDetails)
+            throws RessourceNotFoundException, UserNotAuthorizedToDoThisActionException {
 
-        User basketOwner = userRepository.findById(userId);
-        User authUser = userRepository.findByEmail(userDetails.getUsername());
-        String authRole = userDetails.getAuthorities().toString();
-
-        if(!authRole.contains("ROLE_ADMIN") && authUser.getId() != basketOwner.getId() ){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        Stock sourceStock = stockRepository.findByUserIdAndBookId(bookStock.getUser_id(), bookStock.getBook_id());
-        Book wantedBook = bookRepository.findById(bookStock.getBook_id());
-
-        Basket relatedBasket = basketRepository.findByPurchaserId(authUser.getId());
-        relatedBasket.addBook(wantedBook);
-
-        relatedBasket.addAmount(sourceStock.getPrice());
-
-        basketRepository.save(relatedBasket);
-        log.info(basketRepository.findByPurchaserId(userId).toString());
+        basketService.modifyBasket(userId, bookStock, userDetails);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/basket/{userId}/removeBook")
     public ResponseEntity<Void> removeBook
             (@PathVariable int userId, @RequestBody StockCreator bookStock,
-             @AuthenticationPrincipal UserDetails userDetails){
+             @AuthenticationPrincipal UserDetails userDetails)
+            throws RessourceNotFoundException, UserNotAuthorizedToDoThisActionException{
 
-        User basketOwner = userRepository.findById(userId);
-        User authUser = userRepository.findByEmail(userDetails.getUsername());
-        String authRole = userDetails.getAuthorities().toString();
-
-        if(!authRole.contains("ROLE_ADMIN") && authUser.getId() != basketOwner.getId() ){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        Stock sourceStock = stockRepository.findByUserIdAndBookId(bookStock.getUser_id(), bookStock.getBook_id());
-        Book removedBook = bookRepository.findById(bookStock.getBook_id());
-
-        Basket relatedBasket = basketRepository.findByPurchaserId(authUser.getId());
-        relatedBasket.getWantedBooks().remove(removedBook);
-        relatedBasket.deductAmount(sourceStock.getPrice());
-
-        basketRepository.save(relatedBasket);
+        basketService.removeBook(userId, bookStock, userDetails);
 
         return ResponseEntity.ok().build();
     }
@@ -114,48 +83,19 @@ public class BasketController {
     @PostMapping("/basket/{userId}/creation")
     public ResponseEntity<String> createBasket
             (@PathVariable int userId, @AuthenticationPrincipal UserDetails userDetails,
-             UriComponentsBuilder ucb){
+             UriComponentsBuilder ucb)
+            throws UserNotAuthorizedToDoThisActionException{
 
-        User basketOwner = userRepository.findById(userId);
-        User authUser = userRepository.findByEmail(userDetails.getUsername());
-        String authRole = userDetails.getAuthorities().toString();
-
-        log.info("Avant l'auht");
-        if(!authRole.contains("ROLE_ADMIN") && authUser.getId() != basketOwner.getId() ){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        log.info("Apres l'auht");
-
-        Basket newBasket = new Basket(basketOwner);
-        log.info(newBasket.toString());
-        log.info("Apres la création de basket");
-
-        basketRepository.save(newBasket);
-        log.info("Apres la sauvegarde de basket");
-
-        URI uri = ucb
-                .path("/basket/{userId}")
-                .buildAndExpand(basketOwner.getId())
-                .toUri();
+        URI uri = basketService.createBasket(userId, userDetails, ucb);
         return ResponseEntity.created(uri).build();
     }
 
     @DeleteMapping("/basket/{userId}")
     public ResponseEntity<Void> deleteBasketOfUser
-            (@AuthenticationPrincipal UserDetails userDetails, @PathVariable int userId){
+            (@AuthenticationPrincipal UserDetails userDetails, @PathVariable int userId)
+            throws RessourceNotFoundException, UserNotAuthorizedToDoThisActionException{
 
-        User actualUser = userRepository.findByEmail(userDetails.getUsername());
-        String authRole = userDetails.getAuthorities().toString();
-
-        if(!authRole.contains("ROLE_ADMIN") && actualUser.getId() != userId){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        Basket basket = basketRepository.findByPurchaserId(userId);
-        log.info(basket.toString());
-        // It is important to do setPurchaser(null), because our basket has
-        // a relationship with User, and it will not delete it if it is linked to a user
-        basket.setPurchaser(null);
-        basketRepository.deleteById(basket.getId());
+        basketService.deleteBasketOfUser(userDetails, userId);
         return ResponseEntity.ok().build();
     }
 

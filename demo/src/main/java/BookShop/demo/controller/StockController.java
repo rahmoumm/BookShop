@@ -1,13 +1,12 @@
 package BookShop.demo.controller;
 
 
-import BookShop.demo.model.Book;
-import BookShop.demo.model.Stock;
-import BookShop.demo.model.StockCreator;
-import BookShop.demo.model.User;
-import BookShop.demo.repository.BookRepository;
-import BookShop.demo.repository.StockRepository;
-import BookShop.demo.repository.UserRepository;
+import BookShop.demo.Exceptions.NoContentFoundException;
+import BookShop.demo.Exceptions.RessourceNotFoundException;
+import BookShop.demo.Exceptions.UserNotAuthorizedToDoThisActionException;
+import BookShop.demo.model.*;
+
+import BookShop.demo.service.StockService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,9 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -29,68 +26,58 @@ import java.util.Map;
 public class StockController {
 
     @Autowired
-    private StockRepository stockRepository;
+    private StockService stockService;
 
-    @Autowired
-    private BookRepository bookRepository;
+    @ExceptionHandler(value = RessourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorReport handleRessourceNotFoundException(RessourceNotFoundException ex) {
+        return new ErrorReport(HttpStatus.NOT_FOUND.value(), ex.getMessage());
+    }
 
-    @Autowired
-    private UserRepository userRepository;
+    @ExceptionHandler(value = NoContentFoundException.class)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ErrorReport handleNoContentFoundException(NoContentFoundException ex) {
+        return new ErrorReport(HttpStatus.NO_CONTENT.value(), ex.getMessage());
+    }
+
+    @ExceptionHandler(value = UserNotAuthorizedToDoThisActionException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorReport handleUserNotAuthorizedToDoThisActionException(UserNotAuthorizedToDoThisActionException ex) {
+        return new ErrorReport(HttpStatus.FORBIDDEN.value(), ex.getMessage());
+    }
 
     @GetMapping("/nonAuth/stocks/ofUser/{userId}")
-    public ResponseEntity<List<Stock>> findStockOfUser(@PathVariable int userId){
+    public ResponseEntity<List<Stock>> findStockOfUser(@PathVariable int userId)
+            throws NoContentFoundException, RessourceNotFoundException {
 
-        List<Stock> usersStock = stockRepository.findByUserId(userId);
+        List<Stock> usersStock = stockService.findStockOfUser(userId);
 
-        if(usersStock.size() == 0){
-            return ResponseEntity.noContent().build();
-        }
         return ResponseEntity.ok(usersStock);
     }
 
     @GetMapping("/nonAuth/stocks/ofBook/{bookId}")
-    public ResponseEntity<List<Stock>> findStockOfBooks(@PathVariable int bookId){
-        List<Stock> booksStock = stockRepository.findByBookId(bookId);
+    public ResponseEntity<List<Stock>> findStockOfBooks(@PathVariable int bookId)
+            throws NoContentFoundException, RessourceNotFoundException{
+        List<Stock> booksStock = stockService.findStockOfBooks(bookId);
 
-        if(booksStock.size() == 0){
-            return ResponseEntity.noContent().build();
-        }
         return ResponseEntity.ok(booksStock);
     }
 
     @GetMapping("/nonAuth/stocks/ofUser/{userId}/ofBook/{bookId}")
-    public ResponseEntity<Stock> findStockByUserAndBook(@PathVariable int userId, @PathVariable int bookId){
-        Stock stock = stockRepository.findByUserIdAndBookId(userId, bookId );
+    public ResponseEntity<Stock> findStockByUserAndBook(@PathVariable int userId, @PathVariable int bookId)
+            throws NoContentFoundException{
+        Stock stock = stockService.findStockByUserAndBook(userId, bookId );
 
-        if(stock == null){
-            return ResponseEntity.noContent().build();
-        }
         return ResponseEntity.ok(stock);
     }
 
     @PutMapping("/seller/stocks/ofUser/{userId}/ofBook/{bookId}")
     public ResponseEntity<Void> restockBook
             (@PathVariable int userId, @PathVariable int bookId,
-             @RequestBody Stock newStock, @AuthenticationPrincipal UserDetails userDetails){
-        Stock stock = stockRepository.findByUserIdAndBookId(userId, bookId);
-        User userAuth = userRepository.findByEmail(userDetails.getUsername());
+             @RequestBody Stock newStock, @AuthenticationPrincipal UserDetails userDetails)
+            throws RessourceNotFoundException, UserNotAuthorizedToDoThisActionException {
 
-        String role = userDetails.getAuthorities().toString();
-
-        if(userAuth.getId() != userId &&  !role.contains("ROLE_ADMIN")){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        if(stock == null){
-            return ResponseEntity.notFound().build();
-        }
-
-        if(newStock.getPrice() != -1d){
-            stock.setPrice(newStock.getPrice());
-        }
-        if(newStock.getAvailableQuantity() != -1){
-            stock.setAvailableQuantity(stock.getAvailableQuantity() + newStock.getAvailableQuantity());
-        }
-        stockRepository.save(stock);
+        stockService.restockBook(userId, bookId, newStock, userDetails);
 
         return ResponseEntity.ok().build();
     }
@@ -98,51 +85,23 @@ public class StockController {
     @PostMapping("/seller/stocks")
     public ResponseEntity<Void> createStock
             (@RequestBody StockCreator stockCreator, UriComponentsBuilder ucb,
-             @AuthenticationPrincipal UserDetails userDetails){
+             @AuthenticationPrincipal UserDetails userDetails)
+            throws UserNotAuthorizedToDoThisActionException {
 
-        Book book = bookRepository.findById(stockCreator.getBook_id());
-        User user = userRepository.findById(stockCreator.getUser_id());
 
-        String role = userDetails.getAuthorities().toString();
+        URI location = stockService.createStock(stockCreator, ucb, userDetails);
 
-        if(userDetails.getUsername() != user.getEmail() && !role.contains("ROLE_ADMIN")){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
 
-        Stock stock = new Stock(user, book, stockCreator.getAvailabe_quantity(), stockCreator.getPrice());
-
-        stock = stockRepository.save(stock);
-
-        Map<String, Integer> map = new HashMap<>();
-
-        map.put("bookId", stock.getBook().getId());
-        map.put("userId", stock.getUser().getId());
-        URI uri = ucb
-                .path("/stocks/ofUser/{userId}/ofBook{bookId}")
-                .buildAndExpand(map)
-                .toUri();
-
-        return ResponseEntity.created(uri).build();
+        return ResponseEntity.created(location).build();
     }
 
     @DeleteMapping("/seller/stocks/ofUser/{userId}/ofBook/{bookId}")
     public ResponseEntity<Void> deleteStock
             (@PathVariable int userId, @PathVariable int bookId,
-             @AuthenticationPrincipal UserDetails userDetails){
-        Stock stock = stockRepository.findByUserIdAndBookId(userId, bookId);
-        User user = userRepository.findById(userId);
+             @AuthenticationPrincipal UserDetails userDetails)
+            throws UserNotAuthorizedToDoThisActionException, RessourceNotFoundException{
 
-        String email = userDetails.getUsername();
-        String role = userDetails.getAuthorities().toString();
-
-        if(!role.contains("ROLE_ADMIN") && !email.equals(user.getEmail())){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        if(stock == null){
-            return ResponseEntity.notFound().build();
-        }
-        stockRepository.delete(stock);
+        stockService.deleteStock(userId, bookId, userDetails);
         return ResponseEntity.ok().build();
     }
 
